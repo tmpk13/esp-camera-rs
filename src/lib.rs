@@ -324,16 +324,18 @@ impl<'a> Camera<'a> {
         pin_sccb_sda: impl Peripheral<P = impl InputPin + OutputPin> + 'a,
         pin_sccb_scl: impl Peripheral<P = impl InputPin + OutputPin> + 'a,
 
-        frame_size: framesize_t,
-
         xclk_freq_hz: i32,
 
-        grab_mode: camera::camera_grab_mode_t,
+        ledc_timer: ledc_timer_t,
+        ledc_channel: ledc_channel_t,
 
         pixel_format: pixformat_t,
-
+        frame_size: framesize_t,
         jpeg_quality: i32, // 0-63
-        fb_count: usize,
+        fb_count: usize, // 1 or more
+        grab_mode: camera::camera_grab_mode_t,
+
+
     ) -> Result<Self, esp_idf_sys::EspError> {
         esp_idf_hal::into_ref!(
             pin_pwdn,
@@ -378,12 +380,10 @@ impl<'a> Camera<'a> {
             pin_pclk: pin_pclk.pin(),
 
             xclk_freq_hz: xclk_freq_hz,
-            ledc_timer: esp_idf_sys::ledc_timer_t_LEDC_TIMER_0,
-            ledc_channel: esp_idf_sys::ledc_channel_t_LEDC_CHANNEL_0,
-
+            ledc_timer: ledc_timer, // 0
+            ledc_channel: ledc_channel, // 0
             pixel_format: pixel_format,
             frame_size: frame_size,
-
             jpeg_quality: jpeg_quality,
             fb_count: fb_count,
             grab_mode: grab_mode,
