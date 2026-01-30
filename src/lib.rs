@@ -2,7 +2,100 @@ use std::marker::PhantomData;
 
 use esp_idf_hal::gpio::*;
 use esp_idf_hal::peripheral::Peripheral;
-use esp_idf_sys::*;
+use esp_idf_sys::{camera::camera_grab_mode_t, *};
+
+use camera::{camera_model_t, camera_pid_t, camera_sccb_addr_t, framesize_t, pixformat_t};
+
+// Camera sensor pids
+pub const OV9650_PID: camera_pid_t = 150;
+pub const OV7725_PID: camera_pid_t = 119;
+pub const OV2640_PID: camera_pid_t = 38;
+pub const OV3660_PID: camera_pid_t = 13920;
+pub const OV5640_PID: camera_pid_t = 22080;
+pub const OV7670_PID: camera_pid_t = 118;
+pub const NT99141_PID: camera_pid_t = 5136;
+pub const GC2145_PID: camera_pid_t = 8517;
+pub const GC032A_PID: camera_pid_t = 9002;
+pub const GC0308_PID: camera_pid_t = 155;
+pub const BF3005_PID: camera_pid_t = 48;
+pub const BF20A6_PID: camera_pid_t = 8358;
+pub const SC101IOT_PID: camera_pid_t = 55882;
+pub const SC030IOT_PID: camera_pid_t = 39494;
+pub const SC031GS_PID: camera_pid_t = 49;
+
+// Camera sensor models
+pub const CAMERA_OV7725: camera_model_t = 0;
+pub const CAMERA_OV2640: camera_model_t = 1;
+pub const CAMERA_OV3660: camera_model_t = 2;
+pub const CAMERA_OV5640: camera_model_t = 3;
+pub const CAMERA_OV7670: camera_model_t = 4;
+pub const CAMERA_NT99141: camera_model_t = 5;
+pub const CAMERA_GC2145: camera_model_t = 6;
+pub const CAMERA_GC032A: camera_model_t = 7;
+pub const CAMERA_GC0308: camera_model_t = 8;
+pub const CAMERA_BF3005: camera_model_t = 9;
+pub const CAMERA_BF20A6: camera_model_t = 10;
+pub const CAMERA_SC101IOT: camera_model_t = 11;
+pub const CAMERA_SC030IOT: camera_model_t = 12;
+pub const CAMERA_SC031GS: camera_model_t = 13;
+pub const CAMERA_MODEL_MAX: camera_model_t = 14;
+pub const CAMERA_NONE: camera_model_t = 15;
+
+// Sensor sccb addrs
+pub const OV2640_SCCB_ADDR: camera_sccb_addr_t = 48;
+pub const OV5640_SCCB_ADDR: camera_sccb_addr_t = 60;
+pub const OV3660_SCCB_ADDR: camera_sccb_addr_t = 60;
+pub const OV7725_SCCB_ADDR: camera_sccb_addr_t = 33;
+pub const OV7670_SCCB_ADDR: camera_sccb_addr_t = 33;
+pub const NT99141_SCCB_ADDR: camera_sccb_addr_t = 42;
+pub const GC2145_SCCB_ADDR: camera_sccb_addr_t = 60;
+pub const GC032A_SCCB_ADDR: camera_sccb_addr_t = 33;
+pub const GC0308_SCCB_ADDR: camera_sccb_addr_t = 33;
+pub const BF3005_SCCB_ADDR: camera_sccb_addr_t = 110;
+pub const BF20A6_SCCB_ADDR: camera_sccb_addr_t = 110;
+pub const SC101IOT_SCCB_ADDR: camera_sccb_addr_t = 104;
+pub const SC030IOT_SCCB_ADDR: camera_sccb_addr_t = 104;
+pub const SC031GS_SCCB_ADDR: camera_sccb_addr_t = 48;
+
+// Pixel output formats sizes for the camera
+pub const PIXFORMAT_RGB565: pixformat_t = 0;
+pub const PIXFORMAT_YUV422: pixformat_t = 1;
+pub const PIXFORMAT_YUV420: pixformat_t = 2;
+pub const PIXFORMAT_GRAYSCALE: pixformat_t = 3;
+pub const PIXFORMAT_JPEG: pixformat_t = 4;
+pub const PIXFORMAT_RGB888: pixformat_t = 5;
+pub const PIXFORMAT_RAW: pixformat_t = 6;
+pub const PIXFORMAT_RGB444: pixformat_t = 7;
+pub const PIXFORMAT_RGB555: pixformat_t = 8;
+
+// Frame capture sizes for the camera
+pub const FRAMESIZE_96X96: framesize_t = 0;
+pub const FRAMESIZE_QQVGA: framesize_t = 1;
+pub const FRAMESIZE_QCIF: framesize_t = 2;
+pub const FRAMESIZE_HQVGA: framesize_t = 3;
+pub const FRAMESIZE_240X240: framesize_t = 4;
+pub const FRAMESIZE_QVGA: framesize_t = 5;
+pub const FRAMESIZE_CIF: framesize_t = 6;
+pub const FRAMESIZE_HVGA: framesize_t = 7;
+pub const FRAMESIZE_VGA: framesize_t = 8;
+pub const FRAMESIZE_SVGA: framesize_t = 9;
+pub const FRAMESIZE_XGA: framesize_t = 10;
+pub const FRAMESIZE_HD: framesize_t = 11;
+pub const FRAMESIZE_SXGA: framesize_t = 12;
+pub const FRAMESIZE_UXGA: framesize_t = 13;
+pub const FRAMESIZE_FHD: framesize_t = 14;
+pub const FRAMESIZE_P_HD: framesize_t = 15;
+pub const FRAMESIZE_P_3MP: framesize_t = 16;
+pub const FRAMESIZE_QXGA: framesize_t = 17;
+pub const FRAMESIZE_QHD: framesize_t = 18;
+pub const FRAMESIZE_WQXGA: framesize_t = 19;
+pub const FRAMESIZE_P_FHD: framesize_t = 20;
+pub const FRAMESIZE_QSXGA: framesize_t = 21;
+pub const FRAMESIZE_INVALID: framesize_t = 22;
+
+// Camera grab modes
+pub const CAMERA_GRAB_WHEN_EMPTY: camera_grab_mode_t = 0;
+pub const CAMERA_GRAB_LATEST: camera_grab_mode_t = 1;
 
 pub struct FrameBuffer<'a> {
     fb: *mut camera::camera_fb_t,
@@ -227,15 +320,50 @@ impl<'a> Camera<'a> {
         pin_vsync: impl Peripheral<P = impl InputPin + OutputPin> + 'a,
         pin_href: impl Peripheral<P = impl InputPin + OutputPin> + 'a,
         pin_pclk: impl Peripheral<P = impl InputPin + OutputPin> + 'a,
+
+        pin_sccb_sda: impl Peripheral<P = impl InputPin + OutputPin> + 'a,
+        pin_sccb_scl: impl Peripheral<P = impl InputPin + OutputPin> + 'a,
+
+        frame_size: framesize_t,
+
+        xclk_freq_hz: i32,
+
+        grab_mode: camera::camera_grab_mode_t,
+
+        pixel_format: pixformat_t,
+
+        jpeg_quality: i32, // 0-63
+        fb_count: usize,
     ) -> Result<Self, esp_idf_sys::EspError> {
         esp_idf_hal::into_ref!(
-            pin_pwdn, pin_reset, pin_xclk, pin_d0, pin_d1, pin_d2, pin_d3, pin_d4, pin_d5, pin_d6,
-            pin_d7, pin_vsync, pin_href, pin_pclk
+            pin_pwdn,
+            pin_reset,
+            pin_xclk,
+            pin_d0,
+            pin_d1,
+            pin_d2,
+            pin_d3,
+            pin_d4,
+            pin_d5,
+            pin_d6,
+            pin_d7,
+            pin_vsync,
+            pin_href,
+            pin_pclk,
+            pin_sccb_sda,
+            pin_sccb_scl
         );
         let config = camera::camera_config_t {
             pin_pwdn: pin_pwdn.pin(),
             pin_reset: pin_reset.pin(),
             pin_xclk: pin_xclk.pin(),
+
+            __bindgen_anon_1: camera::camera_config_t__bindgen_ty_1 {
+                pin_sccb_sda: pin_sccb_sda.pin(),
+            },
+            __bindgen_anon_2: camera::camera_config_t__bindgen_ty_2 {
+                pin_sccb_scl: pin_sccb_scl.pin(),
+            },
 
             pin_d0: pin_d0.pin(),
             pin_d1: pin_d1.pin(),
@@ -249,16 +377,16 @@ impl<'a> Camera<'a> {
             pin_href: pin_href.pin(),
             pin_pclk: pin_pclk.pin(),
 
-            xclk_freq_hz: 20000000,
+            xclk_freq_hz: xclk_freq_hz,
             ledc_timer: esp_idf_sys::ledc_timer_t_LEDC_TIMER_0,
             ledc_channel: esp_idf_sys::ledc_channel_t_LEDC_CHANNEL_0,
 
-            pixel_format: camera::pixformat_t_PIXFORMAT_RGB565,
-            frame_size: camera::framesize_t_FRAMESIZE_QVGA,
+            pixel_format: pixel_format,
+            frame_size: frame_size,
 
-            jpeg_quality: 12,
-            fb_count: 1,
-            grab_mode: camera::camera_grab_mode_t_CAMERA_GRAB_WHEN_EMPTY,
+            jpeg_quality: jpeg_quality,
+            fb_count: fb_count,
+            grab_mode: grab_mode,
 
             ..Default::default()
         };
@@ -292,3 +420,4 @@ impl<'a> Drop for Camera<'a> {
         esp!(unsafe { camera::esp_camera_deinit() }).expect("error during esp_camera_deinit")
     }
 }
+
