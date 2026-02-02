@@ -123,7 +123,7 @@ impl<'a> FrameBuffer<'a> {
         unsafe { (*self.fb).timestamp }
     }
 }
-impl<'a> Drop for Framebuffer<'a> {
+impl<'a> Drop for FrameBuffer<'a> {
     fn drop(&mut self) {
         unsafe {
             camera::esp_camera_fb_return(self.fb);
