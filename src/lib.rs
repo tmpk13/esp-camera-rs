@@ -123,6 +123,13 @@ impl<'a> FrameBuffer<'a> {
         unsafe { (*self.fb).timestamp }
     }
 }
+impl<'a> Drop for Framebuffer<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            camera::esp_camera_fb_return(self.fb);
+        }
+    }
+}
 
 pub struct CameraSensor<'a> {
     sensor: *mut camera::sensor_t,
